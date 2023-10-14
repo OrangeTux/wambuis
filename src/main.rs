@@ -1,4 +1,4 @@
-use std::{fmt, fs, error::Error};
+use std::{error::Error, fmt, fs};
 
 #[derive(Debug)]
 /// The type returned in the event of a parse error.
@@ -57,6 +57,7 @@ struct BatteryStatus {
     charge_state: ChargeState,
     voltage: f32,
     energy: f32,
+    consumption: f32,
     capacity: usize,
 }
 
@@ -64,8 +65,8 @@ impl fmt::Display for BatteryStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "SoC: {}%, {}Wh, {} V",
-            self.capacity, self.energy, self.voltage
+            "SoC: {}%, {}Wh, {}V, {}W",
+            self.capacity, self.energy, self.voltage, self.consumption
         )
     }
 }
@@ -83,6 +84,11 @@ impl TryFrom<String> for BatteryStatus {
     type Error = ParseError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
+        let consumption: f32 = extract_value_for("POWER_SUPPLY_POWER_NOW", &value)?
+            .parse::<f32>()
+            .map_err(|_| ParseError::ValueError(format!("failed to parse \"{value}\" as f32")))?
+            / 1_000_000.0;
+
         let capacity: usize = extract_value_for("POWER_SUPPLY_CAPACITY", &value)?
             .parse()
             .map_err(|_| ParseError::ValueError(format!("failed to parse \"{value}\" as f32")))?;
@@ -101,6 +107,7 @@ impl TryFrom<String> for BatteryStatus {
             extract_value_for("POWER_SUPPLY_STATUS", &value)?.try_into()?;
 
         Ok(BatteryStatus {
+            consumption,
             capacity,
             voltage,
             energy,
