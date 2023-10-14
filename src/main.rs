@@ -27,16 +27,30 @@ impl fmt::Display for ParseError {
 }
 
 #[derive(Debug)]
+/// State of the charge process.
 enum ChargeState {
+    /// State is not known
+    Unknown,
+
+    /// Battery is charging.
     Charging,
+
+    /// Battery is discharging.
     Discharging,
+    NotCharging,
+
+    /// Battery is full.
+    Full,
 }
 
 impl fmt::Display for ChargeState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let state = match &self {
+            ChargeState::Unknown => "unknown",
             ChargeState::Charging => "charging",
             ChargeState::Discharging => "discharging",
+            ChargeState::NotCharging => "not_charging",
+            ChargeState::Full => "discharging",
         };
         write!(f, "{state}")
     }
@@ -48,8 +62,9 @@ impl TryFrom<&str> for ChargeState {
         match value {
             "Charging" => Ok(Self::Charging),
             "Discharging" => Ok(Self::Discharging),
+            "Full" => Ok(Self::Full),
             _ => Err(ParseError::ValueError(format!(
-                "failed to parse \"{value}\", expected either \"Charging\" or \"Discharging\""
+                "failed to parse \"{value}\", expected either \"Charging\", \"Discharging\", or \"Full\""
             ))),
         }
     }
@@ -68,7 +83,15 @@ struct BatteryStatus {
 impl BatteryStatus {
     /// Return a CSV formatted string.
     pub fn to_csv(&self) -> String {
-        format!("{}, {}, {}, {}, {}, {}\n", self.moment.duration_since(UNIX_EPOCH).unwrap().as_secs(), self.charge_state, self.voltage, self.energy, self.consumption, self.capacity)
+        format!(
+            "{}, {}, {}, {}, {}, {}\n",
+            self.moment.duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            self.charge_state,
+            self.voltage,
+            self.energy,
+            self.consumption,
+            self.capacity
+        )
     }
 }
 
@@ -133,7 +156,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let status: BatteryStatus = content.try_into()?;
     println!("{status}");
 
-    let mut file = OpenOptions::new().write(true).create(true).append(true).open("/tmp/battery.csv")?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open("/tmp/battery.csv")?;
     file.write_all(status.to_csv().as_bytes())?;
 
     Ok(())
