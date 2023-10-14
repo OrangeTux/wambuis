@@ -1,3 +1,6 @@
+use std::fs::{File, OpenOptions};
+use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{error::Error, fmt, fs};
 
 #[derive(Debug)]
@@ -54,11 +57,19 @@ impl TryFrom<&str> for ChargeState {
 
 #[derive(Debug)]
 struct BatteryStatus {
+    moment: SystemTime,
     charge_state: ChargeState,
     voltage: f32,
     energy: f32,
     consumption: f32,
     capacity: usize,
+}
+
+impl BatteryStatus {
+    /// Return a CSV formatted string.
+    pub fn to_csv(&self) -> String {
+        format!("{}, {}, {}, {}, {}, {}\n", self.moment.duration_since(UNIX_EPOCH).unwrap().as_secs(), self.charge_state, self.voltage, self.energy, self.consumption, self.capacity)
+    }
 }
 
 impl fmt::Display for BatteryStatus {
@@ -107,6 +118,7 @@ impl TryFrom<String> for BatteryStatus {
             extract_value_for("POWER_SUPPLY_STATUS", &value)?.try_into()?;
 
         Ok(BatteryStatus {
+            moment: SystemTime::now(),
             consumption,
             capacity,
             voltage,
@@ -119,8 +131,10 @@ impl TryFrom<String> for BatteryStatus {
 fn main() -> Result<(), Box<dyn Error>> {
     let content = fs::read_to_string("/sys/class/power_supply/BAT0/uevent")?;
     let status: BatteryStatus = content.try_into()?;
-
     println!("{status}");
+
+    let mut file = OpenOptions::new().write(true).create(true).append(true).open("/tmp/battery.csv")?;
+    file.write_all(status.to_csv().as_bytes())?;
 
     Ok(())
 }
