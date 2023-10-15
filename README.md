@@ -16,6 +16,8 @@ Plot the metrics in a graph:
 $ gnuplot --persistent plut.gnuplot
 ```
 
+[Plot with discharge rate](plot.svg)
+
 ## Increase battery life
 
 `powertop` is an amazing tool to find out which processes and devices
