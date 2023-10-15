@@ -14,6 +14,9 @@ set ylabel 'SoC (%))'
 set yrange [0:100]
 set ytics nomirror # dont show the tics on that side
 
+set grid y
+set grid x
+
 # The right y-axis reprents the discharge power in Watts.
 set y2tics
 set y2label 'Power (W)'
@@ -26,8 +29,8 @@ set xlabel 'Time'
 set datafile separator ','
 
 # Plot columns 1 (x) and 6 (y) from battery.csv as a line graph. The line is titled "discharge rate".
-plot 'battery.csv' using 1:6 with lines title "discharge rate", \
-	'' using 1:5 with lines axis x1y2 title "battery level"
+plot 'battery.csv' using 1:6 with lines title "battery level", \
+	'' using 1:5 with lines axis x1y2 title "discharge rate"
 	# Plot columns 1 (x) and 5 (right y) from battery.csv as a line graph. 
 	# The line is titled "battery level".
 	
