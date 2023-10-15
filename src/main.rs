@@ -1,6 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH, self};
 use std::{error::Error, fmt, fs};
 
 #[derive(Debug)]
@@ -152,16 +153,21 @@ impl TryFrom<String> for BatteryStatus {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let content = fs::read_to_string("/sys/class/power_supply/BAT0/uevent")?;
-    let status: BatteryStatus = content.try_into()?;
-    println!("{status}");
+    loop {
+        let content = fs::read_to_string("/sys/class/power_supply/BAT0/uevent")?;
+        let status: BatteryStatus = content.try_into()?;
+        println!("{status}");
 
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(true)
-        .open("battery.csv")?;
-    file.write_all(status.to_csv().as_bytes())?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open("battery.csv")?;
+        file.write_all(status.to_csv().as_bytes())?;
+
+        let interval = time::Duration::from_secs(1);
+        thread::sleep(interval)
+    }
 
     Ok(())
 }
