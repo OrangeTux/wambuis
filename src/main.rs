@@ -1,4 +1,4 @@
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{error::Error, fmt, fs};
@@ -160,7 +160,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .write(true)
         .create(true)
         .append(true)
-        .open("/tmp/battery.csv")?;
+        .open("battery.csv")?;
     file.write_all(status.to_csv().as_bytes())?;
 
     Ok(())
