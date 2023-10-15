@@ -16,7 +16,7 @@ Plot the metrics in a graph:
 $ gnuplot --persistent plut.gnuplot
 ```
 
-[Plot with discharge rate](plot.svg)
+![Plot with discharge rate](plot.png)
 
 ## Increase battery life
 
